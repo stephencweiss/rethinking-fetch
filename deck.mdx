@@ -1,0 +1,785 @@
+import { Steps, Notes, themes } from "mdx-deck";
+import { CodeBlock, Footnote, TitleSlide, Slide } from "./components/";
+import { CodeSurfer, CodeSurferColumns, Step } from "code-surfer";
+import { nightOwl, vsDark, github } from "@code-surfer/themes";
+
+export const theme = themes.future;
+
+<Slide title={"Re-🤔ing 🎾🐕"}>
+
+Rethinking Fetch For Resilience, Scalability, and Predictability
+
+⚡⚡ Lightning Edition ⚡⚡
+
+</Slide>
+
+<Notes>
+
+Because of time constraints, I'm going to be moving pretty quickly. Slides will be available - in fact, this whole site is hosted, so you can play with it at your leisure.
+
+</Notes>
+
+---
+
+<Slide title={"🙋‍♂️ Who Am I?"}>
+
+Software Engineer @ Olo <sup>1</sup> 👨‍💻
+
+Career switcher ♻️
+
+Aspiring Writer 🖋 / Avid Reader 📚 <sup>2</sup>
+
+Rower 🚣‍♂️ / Cyclist 🚴‍♂️ / Rock Climber 🧗‍♂️ / (Retired) Fencer 🤺
+
+Luckiest guy in the world 🌍
+
+<small>
+  (Oh, and I like emojis: My favorite is 😂 <sup>3</sup>)
+</small>
+
+<Footnote>
+  <ol>
+    <li>
+      <a href="https://www.olo.com/careers">Come join!</a>
+    </li>
+    <li>
+      My personal site is{" "}
+      <a href="https://code-comments.com/">code-comments.com</a>
+    </li>
+    <li>
+      Which apparently means I'm&nbsp;
+      <a href="https://www.cnn.com/2021/02/14/tech/crying-laughing-emoji-gen-z/index.html">
+        old
+      </a>. The cool kids use 💀.
+    </li>
+  </ol>
+</Footnote>
+</Slide>
+
+---
+
+<Slide title={"🎯 Goals Of The Talk"}>
+
+<ol>
+  <Steps>
+    <li>Use Algebraic Data Types to model behavior</li>
+    <li>Pattern for more enjoyable (and reliable) coding</li>
+  </Steps>
+</ol>
+
+</Slide>
+
+<Notes>
+
+By the end of this talk, my hope is that you will:
+
+<li>
+  {" "}
+  have an idea of what Algebraic Data Types are and how they might be useful
+</li>
+<li>
+  {" "}
+  have new ideas about ways to make working with remote data more fun (and reliable)
+  in your code bases
+</li>
+
+</Notes>
+
+---
+
+<Slide title={"What Is This Talk About?"}>
+
+<p>In a 🌰: Patterns for working with "Remote Data" reliably</p>
+
+<p>Reliably here means:</p>
+
+<ol>
+  <li>Fault tolerant,</li>
+  <li>
+    Designed such that engineers do not need to re-implement the
+    solution/pattern each time
+  </li>
+  <li>
+    Where the universe of possible results is known in advance (i.e., strictly
+    typed)
+  </li>
+</ol>
+</Slide>
+
+---
+
+# What is Remote Data? <sup>1</sup>
+
+<Footnote>
+  <ol>
+    <li>
+      Remote Data is an example of a{" "}
+      <a href="https://en.wikipedia.org/wiki/Algebraic_data_type">
+        Algebraic Data Type
+      </a>{" "}
+      and I was first introduced to them by Kris Jenkins in his wonderful blog
+      post,{" "}
+      <a href="http://blog.jenkster.com/2016/06/how-elm-slays-a-ui-antipattern.html">
+        "How Elm Slays a UI Antipattern"
+      </a>
+    </li>
+  </ol>
+</Footnote>
+
+<Notes>
+
+<li> What is Remote Data? </li>
+<li> Remote Data came out of the Elm community </li>
+<li> It's a way to model the life cycle of a network request </li>
+
+_All_ phases of request from "Not Started" through "Settled" (resolved or rejected)
+Handling errors: Knowing _if_ there's an error and what we display when we get an error and what we do when we've resolved the error, e.g., by re-requesting
+
+</Notes>
+
+---
+
+<CodeSurfer>
+
+```ts
+type RemoteData<T, E = string> =
+  | { state: RemoteDataState.NotStarted }
+  | { state: RemoteDataState.Loading }
+  | { state: RemoteDataState.Success; data: T }
+  | { state: RemoteDataState.Fail; message: E };
+```
+
+</CodeSurfer>
+
+---
+
+<img
+  alt="Default XState Visualizer"
+  src="https://res.cloudinary.com/scweiss1/image/upload/v1628383750/default-viz-xstate.png"
+/>
+
+<Notes>
+
+It's getting more popular.
+
+XState, a tool for modeling state, actually uses a variant as its default State Machine in its visualizer.
+
+</Notes>
+
+---
+
+# 🥑 Ingredients Of A Solution
+
+<ul>
+
+<Appear>
+  <li>Resilient: We handle errors gracefully.</li>
+  <li>Scalable: We can reuse a pattern easily throughout a codebase.</li>
+  <li>
+    Predictable: We can <em>know</em> what it means to receive a response.
+  </li>
+</Appear>{" "}
+
+</ul>
+
+<Notes>
+
+How do we handle loading screens?
+
+What about before we even _begin_ loading?
+
+What about errors?
+
+</Notes>
+
+---
+
+# Let's get started!
+
+# 🏎
+
+---
+
+<Slide title={"Why aren't `fetch` or `Axios` enough (by default)?"}>
+<ol>
+<Steps>
+<li>
+Consistency
+</li>
+
+<li>Testability</li>
+
+</Steps>
+</ol>
+</Slide>
+
+<Notes>
+
+Let's be clear: Both are great. In fact, we could even use either, but they don't address the problems we're discussing here - at least not natively.
+
+Namely:
+
+Every `fetch` request is configured on its own - no shared patterns. This is about abstracting the common logic.
+
+`Axios` can have shared configuration, but the common practice is to use a Singleton (a shared instance across the entire app) - making testing more difficult
+
+Neither addresses what to do on the client before / after a request is made. They just make the requesting possible.
+
+</Notes>
+
+---
+
+<CodeSurfer style={{overflow: 'scroll'}}>
+
+```ts showNumbers subtitle="A bog-standard 'throw it over the wall and hope for the best' approach"
+import "./styles.css";
+import { useEffect, useState } from "react";
+
+export default function App() {
+  const [state, setState] = useState();
+
+  useEffect(() => {
+    fetch("/api/posts")
+      .then((res) => res.json())
+      .then((res) => setState(res));
+  }, []);
+
+  return (
+    <div>
+      <pre>
+        <code>{JSON.stringify(state, null, 4)}</code>
+      </pre>
+    </div>
+  );
+}
+```
+
+```diff 7:11 subtitle="Make the request in a useEffect"
+
+```
+
+```diff 10[21:34] subtitle="Set it to state"
+
+```
+
+```diff 16 subtitle="Trust that it worked and use it. No validation. No error handling. No loading screen. Nada. Zero. Zilch."
+
+```
+
+</CodeSurfer>
+
+---
+
+<Slide title={"Let's Make Some Improvements"} />
+
+---
+
+<CodeSurfer style={{overflow: 'scroll'}}>
+
+```ts showNumbers subtitle="How I used to handle different UI states (Loading, Error, Success)"
+import "./styles.css";
+import { useEffect, useReducer } from "react";
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "loading":
+      return { ...state, loading: true, isAsked: false };
+    case "success":
+      const { data } = action.payload;
+      if (data.message) {
+        return {
+          ...state,
+          data: null,
+          error: data.message,
+          loading: false,
+          isAsked: true,
+        };
+      } else {
+        return { ...state, data, loading: false, error: null, isAsked: true };
+      }
+    default:
+      return { data: null, error: null, loading: false, isAsked: false };
+  }
+};
+
+export default function App() {
+  const [state, setState] = useReducer(reducer, {});
+
+  useEffect(() => {
+    setState({ type: "loading" });
+    fetch("/posts")
+      .then((res) => res.json())
+      .then((res) => {
+        return setState({ type: "success", payload: { data: res } });
+      })
+      .catch((err) => {
+        return setState({ type: "error", payload: { error } });
+      });
+  }, []);
+
+  return (
+    <div>
+      {!state.isAsked && <div>Unasked</div>}
+      {state.loading && <div>Loading</div>}
+      {state.data && <div>Success</div>}
+      {state.error && <div>Fail</div>}
+    </div>
+  );
+}
+```
+
+```diff 29:39 subtitle="Make the request in a useEffect..."
+
+```
+
+```diff 27 subtitle="... which uses some state management (useReducer here)."
+
+```
+
+```diff 4:24 subtitle="The reducer would determine the current state..."
+
+```
+
+```diff 43:46 subtitle="... and the UI would then render appropriately."
+
+```
+
+</CodeSurfer>
+
+---
+
+<Slide title={"What's not ideal?"}>
+
+<ol>
+  <li>Reducers are easy to mess up. Impossible states.</li>
+  <li>No type safety means we have to check our data when it's returned.</li>
+  <li>Error handling happens on every call and is easy to mess up / miss.</li>
+</ol>
+
+</Slide>
+
+---
+
+<Slide title={"What would improvements look like?"}>
+
+<ol>
+  <Steps>
+    <li>Strict typing.</li>
+    <li>Mutually exclusive states. No impossible states.</li>
+    <li>
+      Built in error handling.<sup>1</sup>
+    </li>
+    <li>
+      Automatic retrying.<sup>1</sup>
+    </li>
+    <li>
+      Automatic header injection.<sup>2</sup>
+    </li>
+  </Steps>
+</ol>
+
+<Footnote>
+<ol>
+<li>
+I don't go into details on these in this talk, but I will show where they're used.
+</li>
+<li>
+I won't actually show this one in the talk, but it's available for inspection in the demo - look for <code>useAccessToken</code>
+</li>
+</ol>
+</Footnote>
+</Slide>
+
+<Notes>
+
+The logic for a reducer is complicated. When we're managing multiple pieces of state like `isAsked` and `loading` and `data`, etc. - it's easy to get into impossible states
+
+Reducers don't protect against this because they're focused on the final states, not the transitions between states.
+
+Wouldn't it be nice if we had states that couldn't overlap - we'll use RemoteData for this.
+
+Automatic retrying that's easily configurable.
+
+Error handling that ensures that all of our responses - successful or otherwise are handled - which means we have strict typing for errors and success.
+
+</Notes>
+
+---
+
+<img
+  style={{ width: "100%" }}
+  alt="Default XState Visualizer"
+  src="https://res.cloudinary.com/scweiss1/image/upload/v1628383750/default-viz-xstate.png"
+/>
+
+<Footnote>
+
+One of my favorite features of XState (and Finite State Machines generally) is how they solve the issue of impossible states by stating explicitly which transitions are allowed.
+
+</Footnote>
+
+---
+
+# ⚠️ Code Alert ⚠️
+
+We're about to dive into a lot of code. 🏊‍♂️
+
+Want to dig in more? ⛏
+
+A full demo is available at the end! ⛰🏅
+
+---
+
+<CodeSurfer>
+
+```ts showNumbers subtitle="Let's say we have an app..."
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  useEffect(() => {
+    dispatch(fetchPosts({ isPending: true }));
+    get<Post[]>("/posts").then((res) => {
+      return dispatch(fetchPosts(res));
+    });
+  }, []);
+
+  return (
+    <div>
+      {state.posts.state === RemoteDataState.Loading && <div>Loading</div>}
+      {state.posts.state === RemoteDataState.Success && (
+        <div>
+          <h2>Access data with confidence</h2>
+          <ul>
+            {state.posts.data.map((post) => (
+              <li>{post.author}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {state.posts.state === RemoteDataState.Fail && (
+        <div>
+          <h2>Handle error</h2>
+          {state.posts.message}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+```diff 4:9 showNumbers subtitle="...in which we need to make a request for posts."
+
+```
+
+```diff 6[8:15] showNumbers subtitle="What if we could know up front what the request would return? We do here! We know that from this we expect a list of Posts."
+
+```
+
+```diff 6[5:7] showNumbers subtitle="How does that work? What is the 'get' function?"
+
+```
+
+</CodeSurfer>
+
+---
+
+<CodeSurfer>
+
+```ts 13:18 showNumbers subtitle="It's a wrapper for making requests..."
+async function request<T>(
+  func: () => Promise<AxiosResponse<T>>,
+  replayAttempts = 0
+): Promise<HttpResponse<T>> {
+  try {
+    const { data } = await replayTimeout(func, replayAttempts);
+    return { status: HttpStatus.Ok, data } as const;
+  } catch (error) {
+    return parseError(error);
+  }
+}
+
+export async function get<T = unknown>(
+  url: string,
+  options?: Omit<AxiosRequestConfig, "data">
+) {
+  return request<T>(() => axios({ ...options, url, method: "get" }), 1);
+}
+```
+
+```diff 1:11 showNumbers subtitle="... wrapping a 'request' method..."
+
+```
+
+```diff 1:11 showNumbers subtitle="... where the 'request' is itself a wrapper...but with niceties. (Note: In this implementation we're wrapping 'Axios', though this would also work with 'fetch'."
+
+```
+
+```diff 6 showNumbers subtitle="Niceties like built-in replays..."
+
+```
+
+```diff 8:10 showNumbers subtitle="and built-in error parsing so all responses are 'successful'."
+
+```
+
+</CodeSurfer>
+
+---
+
+<CodeSurfer>
+
+```ts 2,4 showNumbers subtitle="Back to the request: What is the 'fetchPosts' method we're dispatching? (Note: this could easily be abstracted into a thunk)"
+useEffect(() => {
+  dispatch(fetchPosts({ isPending: true }));
+  get<Post[]>("/posts").then((res) => {
+    return dispatch(fetchPosts(res));
+  });
+}, []);
+```
+
+</CodeSurfer>
+
+---
+
+<CodeSurfer>
+
+```ts showNumbers subtitle="'fetchPosts' is an action creator. (Note the 'as Const' - this enables strict typing!)"
+export const fetchPosts = (response: FetchStatus<Post[]>) => {
+  return {
+    type: ActionType.FetchPosts,
+    payload: { response },
+  } as const;
+};
+```
+
+</CodeSurfer>
+
+---
+
+<CodeSurfer>
+
+```ts showNumbers subtitle="'fetchPosts' is handled by reducer - slightly larger than our first version, but also simpler..."
+export interface PostState {
+  posts: RemoteData<Post[]>;
+}
+export const reducer = (
+  state: PostState = initialState,
+  action: Actions
+): PostState => {
+  switch (action.type) {
+    case ActionType.FetchPosts:
+      const { response } = action.payload;
+      if (isPending(response)) {
+        return {
+          ...state,
+          posts: { state: RemoteDataState.Loading },
+        };
+      }
+      if (isOk(response)) {
+        return {
+          ...state,
+          posts: {
+            state: RemoteDataState.Success,
+            data: response.data,
+          },
+        };
+      } else {
+        return {
+          ...state,
+          posts: {
+            state: RemoteDataState.Fail,
+            message: response.status,
+          },
+        };
+      }
+    default:
+      return state;
+  }
+};
+```
+
+```diff 8:10 showNumbers subtitle="...since we have only one action to handle. As a result, we are more interested in the response on the payload than the action type."
+
+```
+
+```diff 1:3,5 showNumbers subtitle="State is a key 'posts', typed as an array of Posts wrapped by RemoteData (this provides the 'state' of the data)"
+
+```
+
+```diff 11:16 showNumbers subtitle="Handling pending requests..."
+
+```
+
+```diff 17:24 showNumbers subtitle="... and once we know they're okay..."
+
+```
+
+```diff 25:33 showNumbers subtitle="... and if they're not ok."
+
+```
+
+```diff showNumbers
+
+```
+
+</CodeSurfer>
+
+---
+
+<CodeSurfer>
+
+```ts showNumbers subtitle="Now let's inspect some of the Types that make this possible..."
+export enum RemoteDataState {
+  NotStarted = "Not Started",
+  Loading = "Loading",
+  Success = "Success",
+  Fail = "Fail",
+}
+
+export type RemoteData<T, E = string> =
+  | { state: RemoteDataState.NotStarted }
+  | { state: RemoteDataState.Loading }
+  | { state: RemoteDataState.Success; data: T }
+  | { state: RemoteDataState.Fail; message: E };
+
+export enum HttpStatus {
+  Ok = "Ok",
+  Timeout = "Timeout",
+  BadStatus = "Bad Status",
+  Unknown = "Unknown",
+}
+
+interface HttpOk<T> {
+  status: HttpStatus.Ok;
+  data: T;
+}
+
+export type FetchStatus<T> =
+  | (HttpResponse<T> & { isPending?: false })
+  | { isPending: true };
+
+export type HttpResponse<T> =
+  | HttpOk<T>
+  | { status: HttpStatus.BadStatus }
+  | { status: HttpStatus.Timeout }
+  | { status: HttpStatus.Unknown };
+
+export function isOk<T>(response: HttpResponse<T>): response is HttpOk<T> {
+  return response?.status === HttpStatus.Ok;
+}
+
+export function isPending<T>(
+  response: FetchStatus<T>
+): response is { isPending: true } {
+  return Boolean(response?.isPending);
+}
+```
+
+```diff 8:12 showNumbers subtitle="RemoteData is the state of the data and it fully describes what we can expect to be present on the object. (When state is success, there's data. If it's an error, there's a message. And otherwise, we just have the state.)"
+
+```
+
+```diff 26:28 showNumbers subtitle="FetchStatus is a way to model the full life cycle - not just the response."
+
+```
+
+```diff 36:44 showNumbers subtitle="And finally, Typeguards for ergonomics."
+
+```
+
+```diff 8:12,26:34 showNumbers subtitle="RemoteData vs FetchStatus"
+
+```
+
+</CodeSurfer>
+
+<Notes>
+
+RemoteData is the actual shape of the requested Remote Data. FetchStatus is the request's status.
+
+These are related and are easily confused in my experience.
+
+</Notes>
+
+---
+
+<CodeSurfer>
+
+```ts showNumbers subtitle="Coming full circle back to the app..."
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  useEffect(() => {
+    dispatch(fetchPosts({ isPending: true }));
+    get<Post[]>("/posts").then((res) => {
+      return dispatch(fetchPosts(res));
+    });
+  }, []);
+
+  return (
+    <div>
+      {state.posts.state === RemoteDataState.Loading && <div>Loading</div>}
+      {state.posts.state === RemoteDataState.Success && (
+        <div>
+          <h2>Access data with confidence</h2>
+          <ul>
+            {state.posts.data.map((post) => (
+              <li>{post.author}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {state.posts.state === RemoteDataState.Fail && (
+        <div>
+          <h2>Handle error</h2>
+          {state.posts.message}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+```diff showNumbers subtitle="This approach to fetching data..."
+
+```
+
+```diff 24:29 showNumbers subtitle="... is resilient (this works because of the 'parseError' which is part of every 'request')..."
+
+```
+
+```diff 4:9 showNumbers subtitle="... is reusable (even more so with a little abstraction here)..."
+
+```
+
+```diff 14:23 showNumbers subtitle="... and is predictable (we know what we're getting, always)."
+
+```
+
+</CodeSurfer>
+
+---
+
+# <a href="https://codesandbox.io/s/resilient-fetch-o7lw5?file=/src/Resilient.tsx">Demo</a>
+
+---
+
+<Slide title={"❓ Questions?"}/>
+
+---
+
+<Slide title={"🙏 Thank you!"}/>
+
+---
+
+# Resources
+
+- http://blog.jenkster.com/2016/06/how-elm-slays-a-ui-antipattern.html
+- https://elmprogramming.com/remote-data.html
+- https://rametta.org/posts/elm-remote-data/
+- https://medium.com/javascript-inside/slaying-a-ui-antipattern-in-fantasyland-907cbc322d2a
+- https://medium.com/@gcanti/slaying-a-ui-antipattern-with-flow-5eed0cfb627b
+- https://github.com/devexperts/remote-data-ts
+
+Talk Source Code:
+- https://github.com/stephencweiss/rethinking-fetch
