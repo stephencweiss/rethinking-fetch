@@ -5,9 +5,9 @@ import { nightOwl, vsDark, github } from "@code-surfer/themes";
 
 export const theme = themes.future;
 
-<Slide title={"Re-🤔ing 🎾🐕"}>
+<Slide title={"Fetch 🎾🐕"}>
 
-Rethinking Fetch For Resilience, Scalability, and Predictability
+Patterns for Resilience, Scalability, and Predictability
 
 ⚡⚡ Lightning Edition ⚡⚡
 
@@ -58,57 +58,57 @@ Luckiest guy in the world 🌍
 
 ---
 
-<Slide title={"🎯 Goals Of The Talk"}>
+<Slide title={"🎯 Goals of the Talk"}>
 
 <ol>
   <Steps>
-    <li>Use Algebraic Data Types to model behavior</li>
-    <li>Pattern for more enjoyable (and reliable) coding</li>
+    <li>🤔 Recognize when might be appropriate to adopt these patterns </li>
+    <li>
+      🤓 Aware of Algebraic Data Types<sup>1</sup>
+    </li>
+    <li>🥳 Walk through a pattern for more enjoyable (and reliable) coding</li>
   </Steps>
 </ol>
 
+<Footnote>
+<ol>
+<li><a href="https://en.wikipedia.org/wiki/Algebraic_data_type">
+        Algebraic Data Type
+      </a> comes out of the Functional Programming community and is a way to combine types - common classes of algebraic types are product (tuples, records, etc.) and sum (<a href="https://en.wikipedia.org/wiki/Tagged_union">tagged union</a>, co-product, etc.) types. In this talk we're focusing on Discriminated Unions (aka Tagged unions).</li>
+</ol>
+</Footnote>
 </Slide>
-
-<Notes>
-
-By the end of this talk, my hope is that you will:
-
-<li>
-  {" "}
-  have an idea of what Algebraic Data Types are and how they might be useful
-</li>
-<li>
-  {" "}
-  have new ideas about ways to make working with remote data more fun (and reliable)
-  in your code bases
-</li>
-
-</Notes>
 
 ---
 
 <Slide title={"What Is This Talk About?"}>
 
-<p>In a 🌰: Patterns for working with "Remote Data" reliably</p>
+<p>In a 🌰: Patterns for working with "Remote Data" reliably.</p>
 
 <p>Reliably here means:</p>
 
 <ol>
-  <li>Fault tolerant,</li>
+<Steps>
+  <li>Fault tolerant.</li>
   <li>
     Designed such that engineers do not need to re-implement the
-    solution/pattern each time
+    solution/pattern each time.
   </li>
   <li>
     Where the universe of possible results is known in advance (i.e., strictly
-    typed)
+    typed).
   </li>
+</Steps>
 </ol>
 </Slide>
 
 ---
 
-# What is Remote Data? <sup>1</sup>
+<Slide title={"What Is Remote Data?"}>
+
+Remote Data is an example of an Algebraic Data Type.<sup>1</sup>
+
+It's designed for working with data... that's remote!
 
 <Footnote>
   <ol>
@@ -121,11 +121,11 @@ By the end of this talk, my hope is that you will:
       post,{" "}
       <a href="http://blog.jenkster.com/2016/06/how-elm-slays-a-ui-antipattern.html">
         "How Elm Slays a UI Antipattern"
-      </a>
+      </a>.
     </li>
   </ol>
 </Footnote>
-
+</Slide>
 <Notes>
 
 <li> What is Remote Data? </li>
@@ -141,7 +141,7 @@ Handling errors: Knowing _if_ there's an error and what we display when we get a
 
 <CodeSurfer>
 
-```ts
+```ts showNumbers subtitle="Modeling RemoteData as a Discriminated Union"
 type RemoteData<T, E = string> =
   | { state: RemoteDataState.NotStarted }
   | { state: RemoteDataState.Loading }
@@ -158,25 +158,25 @@ type RemoteData<T, E = string> =
   src="https://res.cloudinary.com/scweiss1/image/upload/v1628383750/default-viz-xstate.png"
 />
 
-<Notes>
+<Footnote>
 
-It's getting more popular.
+XState's default machine is actually a model for handling remote data.
 
-XState, a tool for modeling state, actually uses a variant as its default State Machine in its visualizer.
+While I don't use XState in this talk, it could be used as an extra line of defense.
 
-</Notes>
+</Footnote>
 
 ---
 
-# 🥑 Ingredients Of A Solution
+# 🥑 Ingredients of a Solution
 
 <ul>
 
 <Appear>
-  <li>Resilient: We handle errors gracefully.</li>
-  <li>Scalable: We can reuse a pattern easily throughout a codebase.</li>
+  <li>💪 Resilient: We handle errors gracefully.</li>
+  <li>📈 Scalable: We can reuse a pattern easily throughout a codebase.</li>
   <li>
-    Predictable: We can <em>know</em> what it means to receive a response.
+    🤖 Predictable: We can <em>know</em> what it means to receive a response.
   </li>
 </Appear>{" "}
 
@@ -194,23 +194,21 @@ What about errors?
 
 ---
 
-# Let's get started!
+<Slide title={"What's Involved In This Approach?"}>
 
-# 🏎
+This is definitely a functional programming paradigm.
+
+</Slide>
 
 ---
 
-<Slide title={"Why aren't `fetch` or `Axios` enough (by default)?"}>
-<ol>
-<Steps>
-<li>
-Consistency
-</li>
-
-<li>Testability</li>
-
-</Steps>
-</ol>
+<Slide title={"❓ Why aren't `fetch` or `Axios` enough?"}>
+  <ol>
+    <Steps>
+      <li>Consistency</li>
+      <li>Testability</li>
+    </Steps>
+  </ol>
 </Slide>
 
 <Notes>
@@ -226,6 +224,40 @@ Every `fetch` request is configured on its own - no shared patterns. This is abo
 Neither addresses what to do on the client before / after a request is made. They just make the requesting possible.
 
 </Notes>
+
+---
+
+<Slide title={"🚦 Signals To Take This Approach"}>
+
+<ol>
+  <Steps>
+    <li>Overly optimistic rendering</li>
+    <li>Conflating not started with loading or success</li>
+    <li>Lack of error handling</li>
+    <li>Repeated error handling</li>
+  </Steps>
+</ol>
+
+</Slide>
+
+---
+
+<Slide title="🏎 Let's Get Started!">
+
+<div style={{margin: '0 auto'}}>
+<blockquote>
+<h2 >⚠️ Code Alert ⚠️</h2>
+
+We're about to dive into a lot of code. 🏊‍♂️
+
+Want to dig in more? ⛏
+
+A full demo is available at the end! ⛰🏅
+
+</blockquote>
+</div>
+
+</Slide>
 
 ---
 
@@ -254,7 +286,7 @@ export default function App() {
 }
 ```
 
-```diff 7:11 subtitle="Make the request in a useEffect"
+```diff 7:11 subtitle="Make the request in a useEffect."
 
 ```
 
@@ -270,13 +302,17 @@ export default function App() {
 
 ---
 
-<Slide title={"Let's Make Some Improvements"} />
+<Slide title={"Let's Make Some Improvements"} >
+
+This is how I <em>used</em> to try to tackle this problem of different states...
+
+</Slide>
 
 ---
 
 <CodeSurfer style={{overflow: 'scroll'}}>
 
-```ts showNumbers subtitle="How I used to handle different UI states (Loading, Error, Success)"
+```ts 29:39 showNumbers subtitle="Make the request in a useEffect (but with error handling now!)...."
 import "./styles.css";
 import { useEffect, useReducer } from "react";
 
@@ -328,19 +364,19 @@ export default function App() {
 }
 ```
 
-```diff 29:39 subtitle="Make the request in a useEffect..."
+```diff 27 showNumbers subtitle="... which uses some state management (useReducer here)."
 
 ```
 
-```diff 27 subtitle="... which uses some state management (useReducer here)."
+```diff 4:24 showNumbers subtitle="The reducer would determine the current state..."
 
 ```
 
-```diff 4:24 subtitle="The reducer would determine the current state..."
+```diff 43:46 showNumbers subtitle="... and the UI would then render appropriately."
 
 ```
 
-```diff 43:46 subtitle="... and the UI would then render appropriately."
+```diff showNumbers
 
 ```
 
@@ -348,24 +384,27 @@ export default function App() {
 
 ---
 
-<Slide title={"What's not ideal?"}>
+<Slide title={"Areas for Improvement"}>
 
 <ol>
-  <li>Reducers are easy to mess up. Impossible states.</li>
-  <li>No type safety means we have to check our data when it's returned.</li>
-  <li>Error handling happens on every call and is easy to mess up / miss.</li>
+  <Steps>
+    <li>Reducers are easy to mess up. Impossible states.</li>
+    <li>
+      No type safety means checking our data or risking runtime exceptions.
+    </li>
+    <li>Error handling happens on every call and is easy to mess up / miss.</li>
+  </Steps>
 </ol>
 
 </Slide>
 
 ---
 
-<Slide title={"What would improvements look like?"}>
+<Slide title={"What Would Improvements Look Like?"}>
 
 <ol>
   <Steps>
     <li>Strict typing.</li>
-    <li>Mutually exclusive states. No impossible states.</li>
     <li>
       Built in error handling.<sup>1</sup>
     </li>
@@ -373,7 +412,13 @@ export default function App() {
       Automatic retrying.<sup>1</sup>
     </li>
     <li>
-      Automatic header injection.<sup>2</sup>
+      Automatic header management.<sup>2</sup>
+    </li>
+    <li>
+      No impossible states.<sup>3</sup>
+    </li>
+    <li>
+    Forced to handle all cases.<sup>4</sup>
     </li>
   </Steps>
 </ol>
@@ -385,6 +430,12 @@ I don't go into details on these in this talk, but I will show where they're use
 </li>
 <li>
 I won't actually show this one in the talk, but it's available for inspection in the demo - look for <code>useAccessToken</code>
+</li>
+<li>
+Discriminated Unions make sure that we can confidently use our data, but they don't, on their own prevent impossible states. XState <em>can</em> do that though.
+</li>
+<li>
+This requires a pattern matching construct which I haven't implemented for the purposes of this talk.
 </li>
 </ol>
 </Footnote>
@@ -420,19 +471,9 @@ One of my favorite features of XState (and Finite State Machines generally) is h
 
 ---
 
-# ⚠️ Code Alert ⚠️
-
-We're about to dive into a lot of code. 🏊‍♂️
-
-Want to dig in more? ⛏
-
-A full demo is available at the end! ⛰🏅
-
----
-
 <CodeSurfer>
 
-```ts showNumbers subtitle="Let's say we have an app..."
+```ts showNumbers subtitle="Let's refactor our app to have some of these improvements."
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -467,11 +508,11 @@ export default function App() {
 }
 ```
 
-```diff 4:9 showNumbers subtitle="...in which we need to make a request for posts."
+```diff 4:9 showNumbers subtitle="We still request posts."
 
 ```
 
-```diff 6[8:15] showNumbers subtitle="What if we could know up front what the request would return? We do here! We know that from this we expect a list of Posts."
+```diff 6[8:15] showNumbers subtitle="In this case, however, we're declaring up front the expected return type (a list of Posts)."
 
 ```
 
@@ -485,7 +526,7 @@ export default function App() {
 
 <CodeSurfer>
 
-```ts 13:18 showNumbers subtitle="It's a wrapper for making requests..."
+```ts 13:18 showNumbers subtitle="The 'get' function is a wrapper for making requests..."
 async function request<T>(
   func: () => Promise<AxiosResponse<T>>,
   replayAttempts = 0
@@ -510,7 +551,7 @@ export async function get<T = unknown>(
 
 ```
 
-```diff 1:11 showNumbers subtitle="... where the 'request' is itself a wrapper...but with niceties. (Note: In this implementation we're wrapping 'Axios', though this would also work with 'fetch'."
+```diff 1:11 showNumbers subtitle="... where 'request' is itself a wrapper...but with niceties. (Note: In this implementation we're wrapping 'Axios', though this would also work with 'fetch'."
 
 ```
 
@@ -764,11 +805,11 @@ export default function App() {
 
 ---
 
-<Slide title={"❓ Questions?"}/>
+<Slide title={"❓ Questions?"} />
 
 ---
 
-<Slide title={"🙏 Thank you!"}/>
+<Slide title={"🙏 Thank You!"} />
 
 ---
 
