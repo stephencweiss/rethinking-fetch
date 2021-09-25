@@ -1,17 +1,26 @@
 import * as React from "react";
 import styled from "styled-components";
-export const SlideWrapper = styled.div`
+export const Content = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
   margin-block: auto;
+  & li {
+    margin-block-end: 1rem;
+  }
+`;
+
+export const Frame = styled.div`
+  margin: 10px;
+  height: 100%;
+  width: 60vw;
+  position: relative;
 `;
 
 export function Slide({ title, children }) {
   return (
-    <SlideWrapper>
+    <Frame>
       <h1>{title}</h1>
-      {children}
-    </SlideWrapper>
+      <Content>{children}</Content>
+    </Frame>
   );
 }

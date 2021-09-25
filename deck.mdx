@@ -1,15 +1,15 @@
 import { Steps, Notes, themes } from "mdx-deck";
-import { CodeBlock, Footnote, TitleSlide, Slide } from "./components/";
+import { Alert, CodeBlock, Footnote, Slide } from "./components/";
 import { CodeSurfer, CodeSurferColumns, Step } from "code-surfer";
 import { nightOwl, vsDark, github } from "@code-surfer/themes";
 
-export const theme = themes.future;
+export const theme = themes.code;
 
 <Slide title={"Fetch 🎾🐕"}>
 
 Patterns for Resilience, Scalability, and Predictability
 
-⚡⚡ Lightning Edition ⚡⚡
+⚡⚡ Lightning Edition (Sort Of) ⚡⚡
 
 </Slide>
 
@@ -23,7 +23,7 @@ Because of time constraints, I'm going to be moving pretty quickly. Slides will 
 
 <Slide title={"🙋‍♂️ Who Am I?"}>
 
-Software Engineer @ Olo <sup>1</sup> 👨‍💻
+FE Engineer on Expo 👨‍💻<sup>1</sup>
 
 Career switcher ♻️
 
@@ -34,13 +34,13 @@ Rower 🚣‍♂️ / Cyclist 🚴‍♂️ / Rock Climber 🧗‍♂️ / (Reti
 Luckiest guy in the world 🌍
 
 <small>
-  (Oh, and I like emojis: My favorite is 😂 <sup>3</sup>)
+  (Oh, and I like emojis, parentheticals, and footnotes: My favorite emoji is 😂 <sup>3</sup>)
 </small>
 
 <Footnote>
   <ol>
     <li>
-      <a href="https://www.olo.com/careers">Come join!</a>
+      Which means that this talk will be in Typescript (😱)
     </li>
     <li>
       My personal site is{" "}
@@ -64,9 +64,9 @@ Luckiest guy in the world 🌍
   <Steps>
     <li>🤔 Recognize when might be appropriate to adopt these patterns </li>
     <li>
-      🤓 Aware of Algebraic Data Types<sup>1</sup>
+      🤓 Develop awareness (not mastery) of Algebraic Data Types<sup>1</sup>
     </li>
-    <li>🥳 Walk through a pattern for more enjoyable (and reliable) coding</li>
+    <li>🥳 Explore a pattern for more enjoyable (and reliable) coding</li>
   </Steps>
 </ol>
 
@@ -95,8 +95,7 @@ Luckiest guy in the world 🌍
     solution/pattern each time.
   </li>
   <li>
-    Where the universe of possible results is known in advance (i.e., strictly
-    typed).
+    Handle the universe of all possible results. This means we'll need to know the extent of that universe in advance - a feat we'll accomplish with strict typing.
   </li>
 </Steps>
 </ol>
@@ -168,19 +167,19 @@ While I don't use XState in this talk, it could be used as an extra line of defe
 
 ---
 
-# 🥑 Ingredients of a Solution
+<Slide title={'🥑 Ingredients of a Solution'}>
 
-<ul>
-
-<Appear>
-  <li>💪 Resilient: We handle errors gracefully.</li>
-  <li>📈 Scalable: We can reuse a pattern easily throughout a codebase.</li>
-  <li>
-    🤖 Predictable: We can <em>know</em> what it means to receive a response.
-  </li>
-</Appear>{" "}
-
-</ul>
+  It's going to be reliable. Which means...
+  <ul>
+  <Appear>
+    <li>💪 Resilient: We handle errors gracefully.</li>
+    <li>📈 Scalable: We can reuse a pattern easily throughout a codebase.</li>
+    <li>
+      🤖 Predictable: We can <em>know</em> what it means to receive a response.
+    </li>
+  </Appear>{" "}
+  </ul>
+</Slide>
 
 <Notes>
 
@@ -196,8 +195,12 @@ What about errors?
 
 <Slide title={"What's Involved In This Approach?"}>
 
-This is definitely a functional programming paradigm.
+This is definitely a functional programming paradigm.<sup>1</sup>
+<Footnote>
 
+Jim R gave a talk, <a href="https://drive.google.com/file/d/1xr7utDf_XRmcXvwnMWrOrNlEN23OVwul/view?usp=sharing">Functions are Interfaces</a> about functional programming, and we have the <a href="https://ololabs.atlassian.net/wiki/spaces/OLO/pages/328434498/Learning+F">Learning F#</a> space for more resources on functional approaches.
+
+</Footnote>
 </Slide>
 
 ---
@@ -244,9 +247,9 @@ Neither addresses what to do on the client before / after a request is made. The
 
 <Slide title="🏎 Let's Get Started!">
 
-<div style={{margin: '0 auto'}}>
+
 <blockquote>
-<h2 >⚠️ Code Alert ⚠️</h2>
+<Alert>⚠️ Code Alert ⚠️</Alert>
 
 We're about to dive into a lot of code. 🏊‍♂️
 
@@ -255,7 +258,7 @@ Want to dig in more? ⛏
 A full demo is available at the end! ⛰🏅
 
 </blockquote>
-</div>
+
 
 </Slide>
 
@@ -418,7 +421,7 @@ export default function App() {
       No impossible states.<sup>3</sup>
     </li>
     <li>
-    Forced to handle all cases.<sup>4</sup>
+      Forced to handle all cases.<sup>4</sup>
     </li>
   </Steps>
 </ol>
@@ -551,7 +554,7 @@ export async function get<T = unknown>(
 
 ```
 
-```diff 1:11 showNumbers subtitle="... where 'request' is itself a wrapper...but with niceties. (Note: In this implementation we're wrapping 'Axios', though this would also work with 'fetch'."
+```diff 1:11 showNumbers subtitle="... where 'request' is itself a wrapper...but with niceties. (Note: In this implementation we're wrapping 'Axios', though this would also work with 'fetch'.)"
 
 ```
 
@@ -801,11 +804,13 @@ export default function App() {
 
 ---
 
-# <a href="https://codesandbox.io/s/resilient-fetch-o7lw5?file=/src/Resilient.tsx">Demo</a>
-
----
 
 <Slide title={"❓ Questions?"} />
+
+---
+# <a href="https://codesandbox.io/s/resilient-fetch-o7lw5?file=/src/index.tsx">Demo</a>
+
+# <a href="https://github.com/ololabs/expo-web-ui">Expo: Web-UI</a>
 
 ---
 
